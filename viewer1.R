@@ -7,7 +7,7 @@
 #         
 # 
 
-source( "genomevieweR.R" )
+source( "genomeviewer.R" )
 
 
                             ################
