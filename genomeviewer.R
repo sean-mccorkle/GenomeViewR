@@ -24,6 +24,10 @@ read_break_color <- "violet"
                              # functions #
                              #############
 
+                ########################################
+                # Lower level functions (non-plotting) #
+                ########################################
+
 getrange <- function( x )    # finds the min & max, extends both
    {
     c( min( x ) - range_extend, max( x ) + range_extend )
@@ -37,45 +41,6 @@ get_gene_id <- function( desc )
    {
     sapply( strsplit( desc, ";" ), function( v ) substring( v[1], 4 ) )
    }
-
-# this plots the thin transcript line across the whole transcript,
-# and prints the ID above it, centered
-
-plot_gene_transcript <- function( genedata )
-   {
-    trans_ind <- genedata$type == "mRNA"
-    segments( genedata$start[trans_ind], y_gene_trans, 
-              genedata$stop[trans_ind], y_gene_trans, 
-              lwd=1, col=gene_color )
-    text( (genedata$start[trans_ind] + genedata$stop[trans_ind]) / 2, 
-           y_gene_trans, 
-           #labels = as.character( genedata$symb ),
-           labels = get_gene_id( as.character(genedata$desc[trans_ind]) ),
-           col=gene_color,
-           cex=0.6,
-           adj=c(0.5,-1) )
-
-   }
-
-# this puts thick boxes for every exon in the gene
-
-plot_gene_exons <- function( genedata )
-   {
-    exon_ind <- genedata$type == "CDS"
-    segments( genedata$start[exon_ind], y_gene_trans, 
-              genedata$stop[exon_ind], y_gene_trans,
-              lwd=exon_thick, col=gene_color )
-   }
-
-
-#  plot the entire gene graphic
-
-plot_gene <- function( genedata )
-   {
-    plot_gene_transcript( genedata )
-    plot_gene_exons( genedata )
-   }
-
 
 # read the useful subset of columns from the given SAM file
 # Since SAM files have variable number of columns, we can't use
@@ -129,6 +94,83 @@ parse_cigar <- function( s )
     return( res )
    }
 
+
+                          #####################
+                          # Ploting functions #
+                          #####################
+
+# this plots the thin transcript line across the whole transcript,
+# and prints the ID above it, centered
+
+plot_gene_transcript <- function( genedata )
+   {
+    trans_ind <- genedata$type == "mRNA"
+    segments( genedata$start[trans_ind], y_gene_trans, 
+              genedata$stop[trans_ind], y_gene_trans, 
+              lwd=1, col=gene_color )
+    text( (genedata$start[trans_ind] + genedata$stop[trans_ind]) / 2, 
+           y_gene_trans, 
+           #labels = as.character( genedata$symb ),
+           labels = get_gene_id( as.character(genedata$desc[trans_ind]) ),
+           col=gene_color,
+           cex=0.6,
+           adj=c(0.5,-1) )
+
+   }
+
+# this puts thick boxes for every exon in the gene
+
+plot_gene_exons <- function( genedata )
+   {
+    exon_ind <- genedata$type == "CDS"
+    segments( genedata$start[exon_ind], y_gene_trans, 
+              genedata$stop[exon_ind], y_gene_trans,
+              lwd=exon_thick, col=gene_color )
+   }
+
+
+#  plot the entire gene graphic
+
+plot_gene <- function( genedata )
+   {
+    plot_gene_transcript( genedata )
+    plot_gene_exons( genedata )
+   }
+
+# parse_segments( setdata ) scans through positions and cigar strings and
+# returns a list of stops and starts with read codes indicating exon/intron
+# for used by plot_reads() and coverage calculation
+
+parse_segments <- function( setdata )
+   {
+    segs <- list()
+    for ( i in 1:length( setdata$pos ) )    # for each sam read
+       {
+        cspecs <- parse_cigar( as.character(setdata$cigar[i]) )
+        x <- setdata$pos[i]
+        for ( spec in cspecs )    # for each specifier in the cigar string
+           {
+            if ( spec[[1]] == "M" ) {    # match N positions => exon?
+                segs <- c( segs, 
+                      list( list( "E", x, x + spec[[2]]  ) ) )
+                x <- x + spec[[2]] + 1
+            } else if ( spec[[1]] == "N" ) {  # skip N positions => intron?
+                segs <- c( segs, 
+                           list( list( "I", x, x + spec[[2]] ) ) )
+                x <- x + spec[[2]] + 1
+            } else if ( spec[[1]] == "D" ) {  # delete N positions?
+                x <- x - spec[[2]]            # try backing up
+            } else if ( spec[[1]] == "I" ) {  # insert N positions?
+                x <- x + spec[[2]]            # try moving forward
+            } else {
+               stop( paste( "CIGAR spec", spec[[1]], "unknown.  S is ", as.character( setdata$cigar[i]) ) )
+            }
+            # print( segs[[ length(segs) ]] )
+           }
+       }
+    segs       # okay we're done, return list
+   }
+
 # plot reads
 
 plot_reads <- function( setdata, ystart )
@@ -139,6 +181,7 @@ plot_reads <- function( setdata, ystart )
     colors <- c()
     ys <- c()
     y <- ystart
+
     for ( i in 1:length( setdata$pos ) )    # for each sam read
        {
         cspecs <- parse_cigar( as.character(setdata$cigar[i]) )
