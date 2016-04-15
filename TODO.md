@@ -5,6 +5,9 @@
 
 * tracks
 
+* program to read.table() genes gff3 file once, and then save as a binary
+  so the binary can be hopfully quickly loaded.
+
 * Coverage histograms
 
     * coverage
@@ -19,7 +22,9 @@
 
 * Faster retrieval from SAM files
 
-    * indexing SAM files?
+    x indexing SAM files?
+
+    * when reading SAM blocks, if pos is too close to edge, read two blocks.
 
     * BAM file support?
 
