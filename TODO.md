@@ -1,3 +1,4 @@
+* gene lookup function
 
 x abstract out segment compilation so that both plots and coverage histograms use it
 
