@@ -1,26 +1,29 @@
 
-* abstract out segment compilation so that both plots and coverage histograms use it
+x abstract out segment compilation so that both plots and coverage histograms use it
 
 * filter on matched pairs
 
-* tracks
+x tracks
 
 * program to read.table() genes gff3 file once, and then save as a binary
   so the binary can be hopfully quickly loaded.
 
 * Coverage histograms
 
-    * coverage
+    x coverage
     
-        try R based first
+       x try R based first
         
-    * hist plot
+    x hist plot
+
+    * abstract out coverage array  calculation so maximum can be obtained for
+      scale setting.
 
     * associated vertical scale
 
-* Include all genes in window
+x Include all genes in window
 
-* Faster retrieval from SAM files
+x Faster retrieval from SAM files
 
     x indexing SAM files?
 

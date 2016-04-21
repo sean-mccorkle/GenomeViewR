@@ -12,7 +12,7 @@
                               ###########
 
 range_extend <- 1000    # 1 kb
-y_gene_trans <- 1
+y_gene_trans <- 0
 exon_thick <- 4
 gene_color <- c("blue")   # add more for mutiple genes
 
@@ -53,6 +53,7 @@ get_gene_id <- function( desc )
 #
 load_sam_index <- function( filename )
    {
+    cat( "load sam index ", filename, "\n" )
     read.table( filename,
                 colClasses=c("character","integer","integer","numeric"), 
                 col.names = c("chrom","binstart","line_num","filepos" ) 
@@ -62,20 +63,33 @@ load_sam_index <- function( filename )
 
 
 # given SAMindex table, find index of lower bound of chromosome block 
-# containing position pos.
+# containing position pos.  Returns index i for samdindex[i,]
 
 find_range_index <- function( samindex, chrom, pos )
    {
     # TODO - handle last
-    n <- length( samindex$chrom )
-    achrom <- samindex$chrom[2:n]        # vector of chroms offset by one
-    abinstart <-samindex$binstart[2:n]   # vector of binstarts offset by o
+    #n <- length( samindex$chrom )
+    #achrom <- samindex$chrom[2:n]        # vector of chroms offset by one
+    #abinstart <-samindex$binstart[2:n]   # vector of binstarts offset by o
 
-    cat( "find_range_index n =", n, "\n" )
-    (1:(n-1))[    samindex$chrom[1:(n-1)] == chrom 
-                & samindex$binstart[1:(n-1)] <= pos
-                & abinstart >=pos  
-             ]
+    #cat( "find_range_index n =", n, "\n" )
+    #(1:(n-1))[    samindex$chrom[1:(n-1)] == chrom 
+    #            & samindex$binstart[1:(n-1)] <= pos
+    #            & abinstart >=pos  
+    #         ]
+
+    cat( "find range index for ", chrom, " ", pos, "\n" )
+    n <- length( samindex$binstart )
+
+    cind <- (1:n)[samindex$chrom == chrom]
+    cat( "chrom indices are ", cind, "\n" )
+    i <- min(cind)
+    k <- max(cind)
+    while ( i <= k && samindex$binstart[i+1] <= pos )
+        i <- i + 1
+    cat( "got: ", i, "\n" )
+    print( samindex[i,] )
+    i
    }
 
 #
@@ -83,6 +97,7 @@ find_range_index <- function( samindex, chrom, pos )
 #
 open_samfile_read <- function( filename )
    {
+    cat( "open samfile read ", filename, "\n" )
     con <- file( filename )
     open( con, "r" )
     con
@@ -96,15 +111,16 @@ open_samfile_read <- function( filename )
 #
 extract_sam_record_block <- function( samindex, samfilecon, chrom, pos )
    {
-    k <- find_range_index( samindex, "chrC03", 7234532 )
+    k <- find_range_index( samindex, chrom, pos )
     cat( "isSeekable? ", isSeekable(samfilecon), "\n" )
 
     if ( ! isSeekable(samfilecon) )
        {  stop( "samfile is not seekable\n" ); }
 
     nlines <- samindex$line_num[k+1] - samindex$line_num[k]
+    cat( "k is ", k, " nlines is ", nlines, "\n" );
 
-    seek( samfilecon, start )
+    seek( samfilecon, samindex$filepos[k] )
 
     readLines(con, n = nlines ) 
    }
@@ -211,25 +227,35 @@ plot_gene <- function( genedata )
    }
 
 # parse_segments( setdata ) scans through positions and cigar strings and
-# returns a list of stops and starts with read codes indicating exon/intron
+# returns a data frame stops and starts with read codes indicating exon/intron
 # for used by plot_reads() and coverage calculation
 
 parse_segments <- function( setdata )
    {
-    segs <- list()
-    for ( i in 1:length( setdata$pos ) )    # for each sam read
+    n_reads <- length( setdata$pos ) 
+    n_init <- 4 * n_reads                  # make initial guess (overestimate) for num rows
+
+    cat( "creating matrix ", n_init, "\n" )
+    segs <- matrix( data = NA, nrow = n_init, ncol = 4 )
+    cat( "created matrix\n" )
+
+    j <- 1
+    for ( i in 1:n_reads )                         # for each sam read
        {
-        cspecs <- parse_cigar( as.character(setdata$cigar[i]) )
+        if ( i %% 100 == 0 ) cat( "read ", i, "\n" );
+        cspecs <- parse_cigar( as.character( setdata$cigar[i] ) )
         x <- setdata$pos[i]
         for ( spec in cspecs )    # for each specifier in the cigar string
            {
             if ( spec[[1]] == "M" ) {    # match N positions => exon?
-                segs <- c( segs, 
-                      list( list( "E", x, x + spec[[2]]  ) ) )
+                #segs[j,] <- c( "E", i, x, x + spec[[2]] )
+                segs[j,] <- c( 1, i, x, x + spec[[2]] )   # 1 means "E"
+                j <- j + 1
                 x <- x + spec[[2]] + 1
             } else if ( spec[[1]] == "N" ) {  # skip N positions => intron?
-                segs <- c( segs, 
-                           list( list( "I", x, x + spec[[2]] ) ) )
+                #segs[j,] <- c( "I", i, x, x + spec[[2]] )
+                segs[j,] <- c( 2, i, x, x + spec[[2]] )    # 2 means "I"
+                j <- j + 1
                 x <- x + spec[[2]] + 1
             } else if ( spec[[1]] == "D" ) {  # delete N positions?
                 x <- x - spec[[2]]            # try backing up
@@ -239,14 +265,101 @@ parse_segments <- function( setdata )
                stop( paste( "CIGAR spec", spec[[1]], "unknown.  S is ", as.character( setdata$cigar[i]) ) )
             }
             # print( segs[[ length(segs) ]] )
+            if ( j > n_init )
+               stop( paste( "overran", n_init, "initial records in segs\n" ) )
            }
        }
-    segs       # okay we're done, return list
+    clip <- 1:(j-1)
+    cds <- rep( "E", j-1 )         # okay we're done, return clipped data frame
+    cds[ segs[clip,1] == 2 ] <- "I"
+    data.frame( code = cds,
+                readnum = segs[clip,2],
+                start = segs[clip,3],
+                stop = segs[clip,4] )
+   }
+
+#  segs <- parse_segments( setdata )
+
+# plot coverage
+
+
+plot_coverage <- function( setdata, segs, yoffset, col="black" )
+   {
+    print( head(segs) )
+    low <- min( segs$start, segs$stop )
+    high <- max( segs$start, segs$stop )
+
+    xoff <- low - 1  # what if zero?
+    len <- high-low + 1
+ 
+    cov <- rep( 0, len )
+
+    ex_ind <-  segs$code == "E"
+    starts <- segs$start[ex_ind] - xoff;
+    stops <- segs$stop[ex_ind] - xoff;
+
+    n_ex <- length( starts )
+    cat( n_ex, "exons\n" )
+    #n_ex <- 100
+    for ( i in 1:n_ex )
+       {
+        #if ( i %% 100 == 0 )
+        #   {
+        #    cat( i, ":", starts[i], " ", stops[i], "\n" )
+        #    #print( cov[ starts[i]:stops[i]
+        #   }
+        cov[ (starts[i]):(stops[i]) ] <- cov[ (starts[i]):(stops[i]) ] + 1
+       }
+    #print( cov )
+    points( low:high, yoffset + cov, type="s", col=col )
    }
 
 # plot reads
 
-plot_reads <- function( setdata, ystart )
+plot_reads <- function( setdata, segs, ystart )
+   {
+    print( head(segs) )
+    #nreads <- length( setdata$pos )
+    nreads <- 100
+    y <- ystart
+
+    xstarts <- c()
+    xstops <- c()
+    ys <- c()
+    colors <- c()
+
+    for ( i in 1:nreads )    # for each sam read
+       {
+        if ( i %% 100 == 0 ) cat( "read ", i, "\n" );
+        rsegs <- segs[ segs$readnum == i, ]    # make subtable of rows for this one read
+
+        m <- length( rsegs$code )
+
+        rcols <- rep( read_color, m )
+        rcols[ rsegs$code == "u" ] <- read_break_color;
+         
+        xstarts <- c( xstarts, rsegs$start )
+        xstops  <- c( xstops,  rsegs$stop )
+        ys      <- c( ys, rep( y, m ) )
+        colors  <- c( colors, rcols )
+         
+        y <- y + read_y_delta
+
+        # if ( xstarts[length(xstarts)] > last_bottom )
+        #   { 
+        #    y <- ystart 
+        #    last_bottom <- xstops[length(xstops)] 
+        #   }
+       }
+    print( xstarts )
+    print( xstops ) 
+    print( ys )
+    print( colors )
+    segments( xstarts, ys, xstops, ys, col=colors )
+   }
+
+
+old_plot_reads <- function( setdata, ystart )
    {
     last_bottom <- 0
     xstarts <- c()
@@ -296,4 +409,3 @@ plot_reads <- function( setdata, ystart )
        }
     segments( xstarts, ys, xstops, ys, col=colors )
    }
-
