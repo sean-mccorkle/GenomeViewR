@@ -1,5 +1,14 @@
-* gene lookup function
 
+* first pass at multiplot function
+
+     . parameters chromosome and position
+
+     . ability to add or substract tracks
+
+* check if desired range is close to 1,000,000 segment boundary in either 
+  direction.  If so, include the previous or subsequent range as appropriate
+
+     . then trim!!!
 x abstract out segment compilation so that both plots and coverage histograms use it
 
 * filter on matched pairs

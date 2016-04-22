@@ -33,6 +33,7 @@ getrange <- function( x )    # finds the min & max, extends both
     c( min( x ) - range_extend, max( x ) + range_extend )
    }
 
+
 # get_gene_id( desc ) extracts a gene identifier from the mRNA description
 # string.   I'm setting this up to handle multiple transcripts, so desc is 
 # presumed to be a vector of strings 
@@ -227,8 +228,8 @@ plot_gene <- function( genedata )
    }
 
 # parse_segments( setdata ) scans through positions and cigar strings and
-# returns a data frame stops and starts with read codes indicating exon/intron
-# for used by plot_reads() and coverage calculation
+# returns a data frame, a "segs" table, of stops and starts with read codes 
+# indicating exon/intron for used by plot_reads() and coverage calculation
 
 parse_segments <- function( setdata )
    {
@@ -278,29 +279,36 @@ parse_segments <- function( setdata )
                 stop = segs[clip,4] )
    }
 
-#  segs <- parse_segments( setdata )
 
-# plot coverage
+# coverage plots
 
+# get_setdata_xrange() returns a vector of length two holding the maximum and minimum
+# of start & stop positions in the given segs table
 
-plot_coverage <- function( setdata, segs, yoffset, col="black" )
+get_setdata_xrange <- function( segs )
    {
-    print( head(segs) )
-    low <- min( segs$start, segs$stop )
-    high <- max( segs$start, segs$stop )
+    return( c( min( segs$start, segs$stop ), max( segs$start, segs$stop ) ) )
+   }
 
-    xoff <- low - 1  # what if zero?
-    len <- high-low + 1
+#
+# given a "segs" table, compute and return a single vector of the coverage.
+# If the xrange not supplied, it is calculated from segs
+#
+compute_coverage <- function( segs, xrange=NA )
+   {
+    if ( is.na( xrange ) )
+        xrange <- get_setdata_xrange( segs )
+
+    xoff <- xrange[1] - 1                    # what if zero?
+    len <- xrange[2] - xrange[1] + 1
  
     cov <- rep( 0, len )
-
     ex_ind <-  segs$code == "E"
     starts <- segs$start[ex_ind] - xoff;
     stops <- segs$stop[ex_ind] - xoff;
 
     n_ex <- length( starts )
     cat( n_ex, "exons\n" )
-    #n_ex <- 100
     for ( i in 1:n_ex )
        {
         #if ( i %% 100 == 0 )
@@ -310,8 +318,17 @@ plot_coverage <- function( setdata, segs, yoffset, col="black" )
         #   }
         cov[ (starts[i]):(stops[i]) ] <- cov[ (starts[i]):(stops[i]) ] + 1
        }
-    #print( cov )
-    points( low:high, yoffset + cov, type="s", col=col )
+    cov
+   }
+
+plot_coverage <- function( segs, yoffset, col="black", cov=NA )
+   {
+    print( head(segs) )
+    xrange <- get_setdata_xrange( segs )
+
+    if ( is.na( cov ) )
+        cov <- compute_coverage( segs, xrange )
+    points( (xrange[1]):(xrange[2]), yoffset + cov, type="s", col=col )
    }
 
 # plot reads

@@ -1,6 +1,5 @@
 source( "genomeviewer.R" )
 
-
 loaded <- TRUE
 #loaded <- FALSE
 
@@ -78,32 +77,67 @@ for ( i in 1:6 )
 
 }   # end load section
 
+
+#####################################################################################
+
+
+
 # Initialize with an empty plot
 
-#r <- getrange( setdata$pos )
+r <- getrange( setdata$pos )
 #r <- c(7200000,7500000)
-r <- c(7360000,7380000)
+#r <- c(7360000,7380000)
+
+# First, pre-compute coverage arrays for all tracks, so we can ascertain
+# maxima and minima
+
+unguided_cov <- as.list( rep( "", 6 ) )
+guided_cov <- as.list( rep( "", 6 ) )
+
+maxcov <- rep( 0, 6 )
+
+for ( i in 1:6 ) 
+   {
+    unguided_cov[[i]] <- compute_coverage( unguided_segs[[i]] )
+    guided_cov[[i]]   <- compute_coverage( guided_segs[[i]]   )
+    maxcov[i] <- max( unguided_cov[[i]], guided_cov[[i]] )
+   }
 
 gene <- ""
-ysep <- 250 
-ymax <- 2000
+ysep <- round( max( maxcov ) * 1.05 )
+cat( "ysep is ", ysep, "\n" )
+ylevs = ((1:6) - 0.75) * ysep
+ymax <- ylevs[6] + ysep
+
 plot( 0, 0, xlim=r, ylim=c(1,ymax), type="n",                # inital empty plot
       main = paste( gene, "     chromosome", chromosome ),
-      xlab="position (nt)",
-      ylab=" "
+      xlab = "position (nt)",
+      ylab = "coverage"
      )
 
-ylevs = ((1:6) - 0.75) * ysep
 
-for ( i in 1:6 )  plot_coverage( unguided_setata[[i]], unguided_segs[[i]], ylevs[i], col="red" )
-
-for ( i in 1:6 )  plot_coverage( guided_setata[[i]], guided_segs[[i]], ylevs[i], col="black" )
+#
+# Plot the coverage histograms, use pre-computed coverage arrays
+#
+for ( i in 1:6 )
+   {
+    plot_coverage( unguided_segs[[i]], 
+                   ylevs[i], 
+                   col="red",
+                   cov = unguided_cov[[i]]
+                 )
+    plot_coverage( guided_segs[[i]], 
+                   ylevs[i], 
+                   col="black",
+                   cov = guided_cov[[i]]
+                 )
+   }
 
 text( r[1], ylevs, labels=c("580-1","580-2","580-3","581-1","581-2","581-3"),adj=c(1,0) )
 
 plot_gene( genedata[ genedata$chrom == chromosome & genedata$start >= r[1] & genedata$stop <= r[2], ] )
 
-
+print( maxcov )
 
 
 
