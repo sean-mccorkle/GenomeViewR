@@ -6,7 +6,9 @@ Repo at https://github.com/sean-mccorkle/GenomeViewR/
 
 Docs at https://github.com/sean-mccorkle/GenomeViewR/wiki
 
-    viewer1.R  - functions to make plots
+    ind1test.R - multi-track coverage plots
+
+    viewer1.R  - *obsolete* functions to make plots
     
     genomeviewer.R - functions and globals
     
