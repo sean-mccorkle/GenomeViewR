@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Program:      build_index.pl
 # Programmer:   Sean R. McCorkle
-#               Biology Departmnet, Brookhaven National Laboratory
+#               Biology Department, Brookhaven National Laboratory
 # Language:     perl
 #
 # Description:  Creates an index of blocks of SAMfile for seek() operations,
