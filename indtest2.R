@@ -1,14 +1,16 @@
 source( "genomeviewer.R" )
 
-loaded <- TRUE
-#loaded <- FALSE
+#loaded <- TRUE
+loaded <- FALSE
 
 if ( ! loaded )
 {
 
 chromosome <- "chrC03"
 target_position <- 7234532
-
+#r <- 7255000 + c( -25000, 25000 )
+pos_range <- 7600000 + c( -50000, 50000 )
+#pos_range <- c( floor(target_position/1000000), ceiling(target_position/1000000) ) * 1000000
 #
 # gene annotation first
 #
@@ -34,8 +36,9 @@ guided_dirs <-
           as.character( 1:6 ),
           sep="" )
 
-# get unguided data
-
+#
+# read unguided data 
+#
 unguided_setdata <- as.list( rep( "", 6 ) )
 
 for ( i in 1:6 )
@@ -45,13 +48,23 @@ for ( i in 1:6 )
     lines <- extract_sam_record_block( samindex, con, chromosome, target_position )
     cat( lines[1], "\n" )
     cat( lines[length(lines)], "\n" )
-    unguided_setdata[[i]] <- parse_sam_lines( lines )
+    unguided_setdata[[i]] <- parse_sam_lines( lines, range = pos_range )
     close( con )
     print( head( unguided_setdata[[i]] ) )
    }
 
-# get guided data
+unguided_segs <- as.list( rep( "", 6 ) )
 
+for ( i in 1:6 )
+   {
+    unguided_segs[[i]] <- parse_segments( unguided_setdata[[i]] )
+    cat( "unguided_segs[[", i,"]]\n" )
+    print( head( unguided_segs[[i]] ) )
+   }
+
+#
+# read guided data
+#
 guided_setdata <- as.list( rep( "", 6 ) )
 
 for ( i in 1:6 )
@@ -61,7 +74,7 @@ for ( i in 1:6 )
     lines <- extract_sam_record_block( samindex, con, chromosome, target_position )
     cat( lines[1], "\n" )
     cat( lines[length(lines)], "\n" )
-    guided_setdata[[i]] <- parse_sam_lines( lines )
+    guided_setdata[[i]] <- parse_sam_lines( lines, range = pos_range )
     close( con )
     print( head( guided_setdata[[i]] ) )
    }
@@ -72,7 +85,7 @@ for ( i in 1:6 )
    {
     guided_segs[[i]] <- parse_segments( guided_setdata[[i]] )
     cat( "guided_segs[[", i,"]]\n" )
-    print(head( guided_segs[[i]] ) )
+    print( head( guided_segs[[i]] ) )
    }
 
 }   # end load section
@@ -80,13 +93,6 @@ for ( i in 1:6 )
 
 #####################################################################################
 
-
-
-# Initialize with an empty plot
-
-r <- getrange( setdata$pos )
-#r <- c(7200000,7500000)
-#r <- c(7360000,7380000)
 
 # First, pre-compute coverage arrays for all tracks, so we can ascertain
 # maxima and minima
@@ -101,6 +107,7 @@ for ( i in 1:6 )
     unguided_cov[[i]] <- compute_coverage( unguided_segs[[i]] )
     guided_cov[[i]]   <- compute_coverage( guided_segs[[i]]   )
     maxcov[i] <- max( unguided_cov[[i]], guided_cov[[i]] )
+    cat( "maxcov[",i,"] is ", maxcov[i], "\n" )
    }
 
 gene <- ""
@@ -109,7 +116,7 @@ cat( "ysep is ", ysep, "\n" )
 ylevs = ((1:6) - 0.75) * ysep
 ymax <- ylevs[6] + ysep
 
-plot( 0, 0, xlim=r, ylim=c(1,ymax), type="n",                # inital empty plot
+plot( 0, 0, xlim=pos_range, ylim=c(1,ymax), type="n",                # inital empty plot
       main = paste( gene, "     chromosome", chromosome ),
       xlab = "position (nt)",
       ylab = "coverage"
@@ -133,7 +140,7 @@ for ( i in 1:6 )
                  )
    }
 
-text( r[1], ylevs, labels=c("580-1","580-2","580-3","581-1","581-2","581-3"),adj=c(1,0) )
+text( pos_range[1], ylevs, labels=c("580-1","580-2","580-3","581-1","581-2","581-3"),adj=c(1,0) )
 
 plot_gene( genedata[ genedata$chrom == chromosome & genedata$start >= r[1] & genedata$stop <= r[2], ] )
 

@@ -131,19 +131,23 @@ extract_sam_record_block <- function( samindex, samfilecon, chrom, pos )
 # Since SAM files have variable number of columns, we can't use
 # read.table()
 
-parse_sam_lines <- function( samlines )
+parse_sam_lines <- function( samlines, range = c(0, 1e10) )
    {
     str_v <- strsplit( samlines, "\t" )
 
-    data.frame(  flag = sapply( str_v, function(r) as.numeric(r[2])),
-                 chrom = sapply( str_v, function(r) r[3] ),
-                 pos = sapply( str_v, function(r) as.numeric(r[4])),
-                 mapq = sapply( str_v, function(r) as.numeric(r[5])),
-                 cigar = sapply( str_v, function(r) r[6] ),
-                 rnext = sapply( str_v, function(r) r[7] ),
-                 pnext = sapply( str_v, function(r) as.numeric(r[8])),
-                 tlen = sapply( str_v, function(r) as.numeric(r[9]))
-              )
+    d <- data.frame(  flag = sapply( str_v, function(r) as.numeric(r[2])),
+                      chrom = sapply( str_v, function(r) r[3] ),
+                      pos = sapply( str_v, function(r) as.numeric(r[4])),
+                      mapq = sapply( str_v, function(r) as.numeric(r[5])),
+                      cigar = sapply( str_v, function(r) r[6] ),
+                      rnext = sapply( str_v, function(r) r[7] ),
+                      pnext = sapply( str_v, function(r) as.numeric(r[8])),
+                      tlen = sapply( str_v, function(r) as.numeric(r[9]))
+                   )
+    cat( "parse_sam_lines, main length ", length( d$pos ), " in-range ",
+         length( d$pos[ d$pos >= range[1] & d$pos <= range[2] ] ),
+         "\n" )
+    d[ d$pos >= range[1] & d$pos <= range[2], ]
    }
 
 read_sam <- function( filename )

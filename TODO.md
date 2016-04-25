@@ -3,12 +3,17 @@
 
      . parameters chromosome and position
 
+     . grouping of replicates
+
+     . gene lookup function
+  
      . ability to add or substract tracks
 
 * check if desired range is close to 1,000,000 segment boundary in either 
   direction.  If so, include the previous or subsequent range as appropriate
 
      . then trim!!!
+
 x abstract out segment compilation so that both plots and coverage histograms use it
 
 * filter on matched pairs
@@ -26,7 +31,7 @@ x tracks
         
     x hist plot
 
-    * abstract out coverage array  calculation so maximum can be obtained for
+    x abstract out coverage array  calculation so maximum can be obtained for
       scale setting.
 
     * associated vertical scale
