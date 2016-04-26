@@ -123,7 +123,7 @@ extract_sam_record_block <- function( samindex, samfilecon, chrom, pos )
 
     seek( samfilecon, samindex$filepos[k] )
 
-    readLines(con, n = nlines ) 
+    readLines( samfilecon, n = nlines ) 
    }
 
 

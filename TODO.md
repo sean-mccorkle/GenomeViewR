@@ -1,9 +1,13 @@
 
 * first pass at multiplot function
 
+     . !!!! FIX REGROUPING OF REPLICATES
+
+     . globalized gene table loader
+
      . parameters chromosome and position
 
-     . grouping of replicates
+     x grouping of replicates
 
      . gene lookup function
   
