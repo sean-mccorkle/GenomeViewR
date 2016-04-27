@@ -16,14 +16,16 @@ load_genefile <- function( genefile, force = FALSE )
        }
    }
 
-
+#
+#  (In this routine, extent must be supplied and must be in nt)
+# 
 multiview_by_pos <- function( chromosome, target_position, extent )
    {
     pos_range <- target_position + c( -extent, extent )
 
     #pos_range <- c( floor(target_position/1000000), ceiling(target_position/1000000) ) * 1000000
     #
-    # gene annotation first
+    # gene annotation first if not loaded already
     #
     load_genefile( "../../Brassica_napus.annotation_v5.gff3" )
 
@@ -33,7 +35,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     unguided_dirs <- 
        paste( "/Projects/Plants/Brassica_napus/Tophat_hpc1/tophat_out_allchrom_", 
              # c( "580-1", "580-2", "580-3", "581-1", "581-2", "581-3" ), 
-              c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ), 
+              c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ),   # regrouped
              sep="" )
 
     #
@@ -42,7 +44,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     guided_dirs <- 
        paste( "/Projects/Plants/Brassica_napus/Tophat_hpc1/tophat_out_guided_allchrom_",
               # as.character( 1:6 ),
-              as.character( c( 1, 5, 6, 4, 2, 3 ) ),
+              as.character( c( 1, 5, 6, 4, 2, 3 ) ),  # regrouped
               sep="" )
 
     #
@@ -144,7 +146,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     
     text( pos_range[1], ylevs, 
           # labels = c("580-1","580-2","580-3","581-1","581-2","581-3"),
-          labels = c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ),
+          labels = c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ),  # regrouped
           adj=c(1,0),
      )
 
@@ -156,6 +158,18 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     print( maxcov )
 
    }   # end multiview_by_position
+
+#
+#  this makes the plot given chromesome and start,stop
+# 
+multiview_region <- function( chromosome, start, stop )
+   {
+    center <- (start + stop) / 2
+    ext <- (stop - start) / 2
+    multiview_by_pos( chromosome, center, ext )
+   }
+
+
 
 #
 # here, extent is the plot extension beyond both ends of transcript
@@ -176,18 +190,44 @@ lookup_transcript <- function( trans )
     transdata[ transnames == trans, ]
    }
 
+#
+# In this routine, extent (as in extension) means extend beyond each end of the transcript.  
+# It can either be a numeric length in nt, or be a string percentage, ie "10%",
+# indicating fraction of transcript length on either side.
+# Default is "%10%".
+#
 
-multiview_by_transcript <- function( transcript, extent=10000 )
+multiview_by_transcript <- function( transcript, extent="10%" )
    {
+    #
+    # gene annotation first if not loaded already
+    #
+    load_genefile( "../../Brassica_napus.annotation_v5.gff3" )
+
     locus <- lookup_transcript( transcript )
+
     print( locus )
+
+    nt_extent <- 0  # extent in nucleotides
+
+    if ( is.numeric( extent ) ) {
+        nt_extent <- extent
+    } else {
+        if ( ! is.character( extent ) )
+            stop( "multiview_by_transcript: extent must be numeric or string percentage" )
+        n <- nchar( extent )
+        if ( substr( extent, n, n ) == "%" )
+            n <- n - 1
+        nt_extent <- ( locus$stop - locus$start ) * (as.numeric( substr( extent, 1, n ) ) / 100 )
+    }
+    
     cat( "multiview_by_pos", as.character(locus$chrom), " ",
                       (locus$stop + locus$start) / 2, " ", 
-                      (locus$stop - locus$start) / 2 + extent , "\n" )
+                      (locus$stop - locus$start) / 2 + nt_extent , "\n" )
 
     multiview_by_pos( as.character(locus$chrom),
                       (locus$stop + locus$start) / 2, 
-                      (locus$stop - locus$start) / 2 + extent 
+                      (locus$stop - locus$start) / 2 + nt_extent 
                     )
    }
     

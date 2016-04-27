@@ -201,13 +201,26 @@ plot_gene_transcript <- function( genedata )
     segments( genedata$start[trans_ind], y_gene_trans, 
               genedata$stop[trans_ind], y_gene_trans, 
               lwd=2, col=gene_color )
-    text( (genedata$start[trans_ind] + genedata$stop[trans_ind]) / 2, 
-           y_gene_trans, 
+    strands <- as.character( genedata$d1[trans_ind] )
+    cat( "strands are ", strands, "\n" )
+
+    # label top strand ("+") transcripts above the transcript line
+    text( (genedata$start[trans_ind] + genedata$stop[trans_ind])[strands=="+"] / 2, 
+           y_gene_trans + 5, 
            #labels = as.character( genedata$symb ),
-           labels = get_gene_id( as.character(genedata$desc[trans_ind]) ),
+           labels = get_gene_id( as.character(genedata$desc[trans_ind][strands=="+"]) ),
            col=gene_color,
            cex=0.6,
-           adj=c(0.5,-1) )
+           adj=c(0.5,0) )
+
+    # label bottom strand ("-") transcripts below the transcript line
+    text( (genedata$start[trans_ind] + genedata$stop[trans_ind])[strands=="-"] / 2, 
+           y_gene_trans - 5, 
+           #labels = as.character( genedata$symb ),
+           labels = get_gene_id( as.character(genedata$desc[trans_ind][strands=="-"]) ),
+           col=gene_color,
+           cex=0.6,
+           adj=c(0.5,1) )
 
    }
 

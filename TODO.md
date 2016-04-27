@@ -3,13 +3,13 @@
 
      x !!!! FIX REGROUPING OF REPLICATES
 
-     . globalized gene table loader
+     x globalized gene table loader
 
      x parameters chromosome and position
 
      x grouping of replicates
 
-     . gene lookup function
+     x gene lookup function
   
      . ability to add or substract tracks
 
