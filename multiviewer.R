@@ -42,7 +42,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     guided_dirs <- 
        paste( "/Projects/Plants/Brassica_napus/Tophat_hpc1/tophat_out_guided_allchrom_",
               # as.character( 1:6 ),
-              as.character( c( 1, 4, 5, 2, 3, 6 ) ),
+              as.character( c( 1, 5, 6, 4, 2, 3 ) ),
               sep="" )
 
     #
@@ -143,8 +143,9 @@ multiview_by_pos <- function( chromosome, target_position, extent )
        }
     
     text( pos_range[1], ylevs, 
-          # labels = c("580-1","580-2","580-3","581-1","581-2","581-3"),adj=c(1,0),
-          labels = c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" )
+          # labels = c("580-1","580-2","580-3","581-1","581-2","581-3"),
+          labels = c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ),
+          adj=c(1,0),
      )
 
     plot_gene( genedata[   genedata$chrom == chromosome 
