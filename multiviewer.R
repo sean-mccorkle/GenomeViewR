@@ -1,4 +1,47 @@
-source( "genomeviewer.R" )
+# Module:      multiview.R
+# Programmer:  Sean R. McCorkle
+# Language:    R
+#
+# Description: routines for creating multi-track coverage plots
+#
+#              There are three routines intended for the user here:
+#
+#           1) multiview_by_transcript( transcript_name, extent )
+#
+#                      optional extent may be string percentage "20%" or
+#                      numeric length in nucleotides (both indicate the 
+#                      extention beyond transcript start and stop, default 
+#                      is "10%")
+#
+#              examples:
+#
+#              multiview_by_transcript( "BnaC09g12820D" )
+#              multiview_by_transcript( "BnaC09g12820D", extent )
+#
+#           2) multiview_region( chromsome, start, stop )
+#
+#                      plot the region of given chromosome between start and stop
+#
+#              example:
+#
+#              multiview_region( "chrA01", 15000000, 15075000 )
+#
+#
+#           3) multiview_by_position( chromosome, target_position, extent )
+#
+#                      plot the region +/- extent on either side of 
+#                      target_position on chromosome.
+#
+#              example:
+#
+#              multiview_by_position( "chrC09", 7345679, 20000 )
+#
+#
+
+source( "/Projects/Plants/Brassica_napus/Graphics/GenomeViewR/genomeviewer.R" )
+    
+
+# multiview_by_pos( chromosome, target_position, extent )
 
 #
 # this only reads genefile into table genedata if it doesn't exist,
@@ -27,7 +70,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     #
     # gene annotation first if not loaded already
     #
-    load_genefile( "../../Brassica_napus.annotation_v5.gff3" )
+    load_genefile( "/Projects/Plants/Brassica_napus/Brassica_napus.annotation_v5.gff3" )
 
     #
     # six unguided directories
@@ -64,7 +107,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
         print( head( unguided_setdata[[i]] ) )
        }
     
-    unguided_segs <- as.list( rep( "", 6 ) )
+    unguided_segs <- as.list( rep( NA, 6 ) )
     
     for ( i in 1:6 )
        {
@@ -76,7 +119,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     #
     # read guided data
     #
-    guided_setdata <- as.list( rep( "", 6 ) )
+    guided_setdata <- as.list( rep( NA, 6 ) )
     
     for ( i in 1:6 )
        {
@@ -90,7 +133,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
         print( head( guided_setdata[[i]] ) )
        }
     
-    guided_segs <- as.list( rep( "", 6 ) )
+    guided_segs <- as.list( rep( NA, 6 ) )
     
     for ( i in 1:6 )
        {
@@ -102,8 +145,8 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     # First, pre-compute coverage arrays for all tracks, so we can ascertain
     # maxima and minima
     
-    unguided_cov <- as.list( rep( "", 6 ) )
-    guided_cov <- as.list( rep( "", 6 ) )
+    unguided_cov <- as.list( rep( NA, 6 ) )
+    guided_cov <- as.list( rep( NA, 6 ) )
     
     maxcov <- rep( 0, 6 )
     
@@ -147,7 +190,7 @@ multiview_by_pos <- function( chromosome, target_position, extent )
     text( pos_range[1], ylevs, 
           # labels = c("580-1","580-2","580-3","581-1","581-2","581-3"),
           labels = c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ),  # regrouped
-          adj=c(1,0),
+          adj=c(0,0),
      )
 
     plot_gene( genedata[   genedata$chrom == chromosome 
@@ -202,7 +245,7 @@ multiview_by_transcript <- function( transcript, extent="10%" )
     #
     # gene annotation first if not loaded already
     #
-    load_genefile( "../../Brassica_napus.annotation_v5.gff3" )
+    load_genefile( "/Projects/Plants/Brassica_napus/Brassica_napus.annotation_v5.gff3" )
 
     locus <- lookup_transcript( transcript )
 
@@ -231,10 +274,4 @@ multiview_by_transcript <- function( transcript, extent="10%" )
                     )
    }
     
-    
-# chromosome <- "chrC03"
-# target_position <- 7234532
-# extent <- 20000               # 20kb on either side
-
-# multiview_by_pos( chromosome, target_position, extent )
 

@@ -170,13 +170,15 @@ sort_by_position <- function( df )
 
 parse_cigar <- function( s )
    {
+    if ( is.na( s ) ) 
+        return( NA )
     res <- list()
     while ( nchar(s) > 0 )
        {
         x1 <- regexpr( "[0-9]+[A-Z]", s )
         l <- attr( x1, "match.length")
         x2 <- x1 + l - 1
-        if ( x1 != 1 )
+        if ( (! is.numeric(x1)) || x1 != 1 )
            { stop( paste( "could not find spec in ", s ) ) }
         spec <- substr( s, x1, x2 )
         k <- substr( spec, 1, l-1 )
@@ -205,7 +207,8 @@ plot_gene_transcript <- function( genedata )
     cat( "strands are ", strands, "\n" )
 
     # label top strand ("+") transcripts above the transcript line
-    text( (genedata$start[trans_ind] + genedata$stop[trans_ind])[strands=="+"] / 2, 
+    if ( sum( strands=="+" ) > 0 )
+       text( (genedata$start[trans_ind] + genedata$stop[trans_ind])[strands=="+"] / 2, 
            y_gene_trans + 5, 
            #labels = as.character( genedata$symb ),
            labels = get_gene_id( as.character(genedata$desc[trans_ind][strands=="+"]) ),
@@ -214,7 +217,8 @@ plot_gene_transcript <- function( genedata )
            adj=c(0.5,0) )
 
     # label bottom strand ("-") transcripts below the transcript line
-    text( (genedata$start[trans_ind] + genedata$stop[trans_ind])[strands=="-"] / 2, 
+    if ( sum( strands=="-" ) > 0 )
+      text( (genedata$start[trans_ind] + genedata$stop[trans_ind])[strands=="-"] / 2, 
            y_gene_trans - 5, 
            #labels = as.character( genedata$symb ),
            labels = get_gene_id( as.character(genedata$desc[trans_ind][strands=="-"]) ),
@@ -248,9 +252,14 @@ plot_gene <- function( genedata )
 # returns a data frame, a "segs" table, of stops and starts with read codes 
 # indicating exon/intron for used by plot_reads() and coverage calculation
 
+# returns NA if no data in setdata
+
 parse_segments <- function( setdata )
    {
     n_reads <- length( setdata$pos ) 
+    if ( n_reads < 1 )
+        return( NA )
+
     n_init <- 4 * n_reads                  # make initial guess (overestimate) for num rows
 
     cat( "creating matrix ", n_init, "\n" )
@@ -311,8 +320,13 @@ get_setdata_xrange <- function( segs )
 # given a "segs" table, compute and return a single vector of the coverage.
 # If the xrange not supplied, it is calculated from segs
 #
+# returns NA if segs is NA
+#
 compute_coverage <- function( segs, xrange=NA )
    {
+    if ( is.na( segs ) )
+       return( NA )
+       
     if ( is.na( xrange ) )
         xrange <- get_setdata_xrange( segs )
 
@@ -340,6 +354,8 @@ compute_coverage <- function( segs, xrange=NA )
 
 plot_coverage <- function( segs, yoffset, col="black", cov=NA )
    {
+    if ( is.na( segs ) )
+        return
     print( head(segs) )
     xrange <- get_setdata_xrange( segs )
 

@@ -3,29 +3,47 @@ source( "genomeviewer.R" )
 #loaded <- TRUE
 loaded <- FALSE
 
+#
+# this only reads genefile into table genedata if it doesn't exist,
+# or force=TRUE
+#
+load_genefile <- function( genefile, force = FALSE )
+   {
+    if ( force || ! exists( "genedata" ) )
+       {
+        cat( "loading genefile", genefile, "\n" )
+        genedata <<- read.table( genefile )
+        names( genedata ) <- c( "chrom","caller","type","start","stop","score", 
+                                "d1", "d2", "descrip" )
+       }
+   }
+
 if ( ! loaded )
 {
 
 chromosome <- "chrC03"
 target_position <- 7234532
-#r <- 7255000 + c( -25000, 25000 )
-pos_range <- 7600000 + c( -50000, 50000 )
+
+#pos_range <- target_position + c( -50000, 50000 )
+
+#pos_range <- 7600000 + c( -50000, 50000 )
+pos_range <- 7280000 + c( -20000, 20000 )
+
+
+
 #pos_range <- c( floor(target_position/1000000), ceiling(target_position/1000000) ) * 1000000
 #
 # gene annotation first
 #
-genefile <- "../../Brassica_napus.annotation_v5.gff3"
-
-genedata <- read.table( genefile )
-names( genedata ) <- c( "chrom","caller","type","start","stop","score", 
-                            "d1", "d2", "descrip" )
+load_genefile( "../../Brassica_napus.annotation_v5.gff3" )
 
 #
 # six unguided directories
 #
 unguided_dirs <- 
    paste( "/Projects/Plants/Brassica_napus/Tophat_hpc1/tophat_out_allchrom_", 
-          c( "580-1", "580-2", "580-3", "581-1", "581-2", "581-3" ), 
+         # c( "580-1", "580-2", "580-3", "581-1", "581-2", "581-3" ), 
+          c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" ), 
          sep="" )
 
 #
@@ -33,7 +51,8 @@ unguided_dirs <-
 #
 guided_dirs <- 
    paste( "/Projects/Plants/Brassica_napus/Tophat_hpc1/tophat_out_guided_allchrom_",
-          as.character( 1:6 ),
+          # as.character( 1:6 ),
+          as.character( c( 1, 4, 5, 2, 3, 6 ) ),
           sep="" )
 
 #
@@ -122,7 +141,6 @@ plot( 0, 0, xlim=pos_range, ylim=c(1,ymax), type="n",                # inital em
       ylab = "coverage"
      )
 
-
 #
 # Plot the coverage histograms, use pre-computed coverage arrays
 #
@@ -140,7 +158,10 @@ for ( i in 1:6 )
                  )
    }
 
-text( pos_range[1], ylevs, labels=c("580-1","580-2","580-3","581-1","581-2","581-3"),adj=c(1,0) )
+text( pos_range[1], ylevs, 
+      # labels = c("580-1","580-2","580-3","581-1","581-2","581-3"),adj=c(1,0),
+      labels = c( "580-1", "581-2", "581-3", "581-1", "580-2", "580-3" )
+     )
 
 plot_gene( genedata[ genedata$chrom == chromosome & genedata$start >= r[1] & genedata$stop <= r[2], ] )
 

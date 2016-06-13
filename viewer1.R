@@ -16,8 +16,8 @@ source( "genomeviewer.R" )
 
 
 viewer1 <- function( gene, xrange=NULL )
-   {
-    genefile <- paste( "gene", gene, "tab", sep="." )
+   
+{    genefile <- paste( "gene", gene, "tab", sep="." )
 
     genedata <- read.table( genefile )
     names( genedata ) <- c( "chrom","caller","type","start","stop","score", 
