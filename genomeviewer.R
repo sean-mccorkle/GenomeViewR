@@ -248,6 +248,44 @@ plot_gene <- function( genedata )
     plot_gene_exons( genedata )
    }
 
+
+plot_blastx_hsps <- function( blastxdata )
+   {
+    if ( is.data.frame( blastxdata ) && nrow( blastxdata ) == 0 ) 
+        return()
+    #cat( "in plot_blastx_hsps(), blastxdata is:\n" )
+    #print( str( blastxdata ) )
+    #print( blastxdata )
+    #cat( "nrow( blastxdata ) == ", nrow( blastxdata ), "\n" )
+    segments( blastxdata$start + blastxdata$q_start, y_gene_trans,
+              blastxdata$start + blastxdata$q_end, y_gene_trans,
+              lwd = 2, 
+              col = gene_color )
+   }
+
+#
+# make a legend box with some blastx hit results
+#
+list_blastx_hsps <- function( blastxdata )
+   {
+    if ( is.data.frame( blastxdata ) && nrow( blastxdata ) == 0 ) 
+        return()
+    save_family <- par()$family
+    par(family="mono")
+    legend( "topright", 
+            legend = paste( blastxdata$gene, 
+                            format( blastxdata$percent_id, width=4, justify="right"), 
+                            format( blastxdata$alignment_length, width=4, justify="right" ),
+                            sep = ""
+                         ),
+            text.col = gene_color,
+            cex = 0.6,
+            bty = "n"
+          )
+    par(family=save_family)
+   }
+
+
 # parse_segments( setdata ) scans through positions and cigar strings and
 # returns a data frame, a "segs" table, of stops and starts with read codes 
 # indicating exon/intron for used by plot_reads() and coverage calculation
