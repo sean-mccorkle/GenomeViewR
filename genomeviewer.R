@@ -233,7 +233,11 @@ plot_gene_transcript <- function( genedata )
 
 plot_gene_exons <- function( genedata )
    {
+    if ( is.data.frame( genedata ) && nrow( genedata ) == 0 ) 
+        return()
     exon_ind <- genedata$type == "CDS"
+    if ( sum( exon_ind ) <= 0 )
+        return()
     segments( genedata$start[exon_ind], y_gene_trans, 
               genedata$stop[exon_ind], y_gene_trans,
               lwd=exon_thick, col=gene_color )
@@ -274,7 +278,7 @@ list_blastx_hsps <- function( blastxdata )
     par(family="mono")
     legend( "topright", 
             legend = paste( blastxdata$gene, 
-                            format( blastxdata$percent_id, width=4, justify="right"), 
+                            format( blastxdata$percent_id, width=7, justify="right"), 
                             format( blastxdata$alignment_length, width=4, justify="right" ),
                             sep = ""
                          ),
