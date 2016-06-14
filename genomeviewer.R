@@ -403,7 +403,11 @@ plot_coverage <- function( segs, yoffset, col="black", cov=NA )
 
     if ( is.na( cov ) )
         cov <- compute_coverage( segs, xrange )
-    points( (xrange[1]):(xrange[2]), yoffset + cov, type="s", col=col )
+    # add in extra endpoint zeros to spoof the plot program into 
+    # extending the plot to the windo boundaries
+    points( c( 0, xrange[1], (xrange[1]):(xrange[2]), xrange[2], 1e9 ), 
+            c( 0, 0,         cov,                     0, 0 ) + yoffset,
+            type="s", col=col )
    }
 
 # plot reads

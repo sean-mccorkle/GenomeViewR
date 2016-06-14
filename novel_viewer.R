@@ -92,8 +92,10 @@ load_blastxfile <- function( blastxfile, force = FALSE )
 #
 #
 #  (In this routine, extent must be supplied and must be in nt)
-# 
-novel_view_by_pos <- function( chromosome, target_position, extent, title="" )
+#   interval is the cluster c(start,stop)
+#
+novel_view_by_pos <- function( chromosome, target_position, extent, 
+                               title="", interval=NA )
    {
     pos_range <- target_position + c( -extent, extent )
 
@@ -189,17 +191,20 @@ novel_view_by_pos <- function( chromosome, target_position, extent, title="" )
     plot_blastx_hsps( blxdata )
     list_blastx_hsps( blxdata )
 
+    if ( ! is.na( interval ) )
+        segments( interval[1], 0, interval[2], 0 )
     print( maxcov )
    }   # end novel_view_by_pos
 
 #
 #  this makes the same plot given chromesome and start,stop
-# 
-novel_view_region <- function( chromosome, start, stop, title="" )
+#  interval is the cluster c(start,stop)
+#
+novel_view_region <- function( chromosome, start, stop, title="", interval=NA )
    {
     center <- (start + stop) / 2
     ext <- (stop - start) / 2
-    novel_view_by_pos( chromosome, center, ext, title )
+    novel_view_by_pos( chromosome, center, ext, title, interval )
    }
 
 
@@ -214,11 +219,14 @@ plotone <- function( cl )
                       paste( "novel cluster ", locus,
                              "\n", toString( cl$num[1] ), " reads",
                              sep=""
-                            ) 
+                            ),
+                      c( cl$start[1], cl$stop[1] ) 
                     )
   }
 
 clusts <- read.table( "../../above_mean.1000.clusts", col.names=c("chrom","start","stop","num" ) )
+
+y_gene_trans <- 3
 
 for ( i in 1:100 )
    plotone( clusts[i,] )
